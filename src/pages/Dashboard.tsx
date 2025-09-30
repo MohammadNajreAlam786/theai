@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CreationCard } from "@/components/CreationCard";
 import { Button } from "@/components/ui/button";
-import { LogOut, Sparkles, User } from "lucide-react";
+import { LogOut, Sparkles, User, Library } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import textIcon from "@/assets/text-icon.png";
 import imageIcon from "@/assets/image-icon.png";
 import musicIcon from "@/assets/music-icon.png";
@@ -10,6 +12,25 @@ import videoIcon from "@/assets/video-icon.png";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user, signOut, loading } = useAuth();
+
+  useEffect(() => {
+    if (!user && !loading) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const creations = [
     {
@@ -42,6 +63,11 @@ const Dashboard = () => {
     }
   ];
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Background effects */}
@@ -60,11 +86,21 @@ const Dashboard = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <Button variant="glass" size="sm" className="hover:shadow-glow-purple transition-all duration-300">
-              <User className="w-4 h-4" />
+            <Button 
+              variant="glass" 
+              size="sm" 
+              className="hover:shadow-glow-purple transition-all duration-300"
+              onClick={() => navigate('/library')}
+            >
+              <Library className="w-4 h-4" />
               My Library
             </Button>
-            <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="hover:text-destructive transition-colors"
+              onClick={handleSignOut}
+            >
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
