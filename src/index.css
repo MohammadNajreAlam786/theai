@@ -19,6 +19,7 @@ All colors MUST be HSL.
 
     --primary: 263 70% 50%;
     --primary-foreground: 0 0% 100%;
+    --primary-glow: 263 70% 65%;
 
     --secondary: 240 4% 16%;
     --secondary-foreground: 0 0% 98%;
@@ -28,6 +29,9 @@ All colors MUST be HSL.
 
     --accent: 263 70% 50%;
     --accent-foreground: 0 0% 100%;
+    --accent-cyan: 190 70% 50%;
+    --accent-pink: 320 70% 55%;
+    --accent-orange: 25 95% 60%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
@@ -42,10 +46,15 @@ All colors MUST be HSL.
     --gradient-secondary: linear-gradient(135deg, hsl(190 70% 50%), hsl(263 70% 50%));
     --gradient-accent: linear-gradient(135deg, hsl(320 70% 50%), hsl(263 70% 50%));
     --gradient-hero: linear-gradient(135deg, hsl(240 10% 3.9%) 0%, hsl(263 70% 20%) 50%, hsl(240 10% 3.9%) 100%);
+    --gradient-orange: linear-gradient(135deg, hsl(25 95% 60%), hsl(45 95% 55%));
+    --gradient-mesh: radial-gradient(at 40% 20%, hsl(263 70% 50% / 0.3) 0px, transparent 50%),
+                      radial-gradient(at 80% 0%, hsl(190 70% 50% / 0.2) 0px, transparent 50%),
+                      radial-gradient(at 0% 50%, hsl(320 70% 50% / 0.2) 0px, transparent 50%);
     
     --glow-purple: 0 0 40px hsl(263 70% 50% / 0.3);
     --glow-cyan: 0 0 40px hsl(190 70% 50% / 0.3);
     --glow-pink: 0 0 40px hsl(320 70% 50% / 0.3);
+    --glow-orange: 0 0 40px hsl(25 95% 60% / 0.3);
   }
 }
 
@@ -56,5 +65,98 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-5xl md:text-7xl;
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    @apply text-4xl md:text-5xl;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-foreground;
+  }
+
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent bg-gradient-primary;
+  }
+
+  .text-gradient-secondary {
+    @apply bg-clip-text text-transparent bg-gradient-secondary;
+  }
+
+  .text-gradient-accent {
+    @apply bg-clip-text text-transparent bg-gradient-accent;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.5));
+    }
+    to {
+      filter: drop-shadow(0 0 40px hsl(var(--primary) / 0.8));
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out;
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 }
