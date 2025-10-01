@@ -8,9 +8,9 @@ import Dashboard from "./pages/Dashboard";
 import TextCreation from "./pages/TextCreation";
 import ImageCreation from "./pages/ImageCreation";
 import MusicCreation from "./pages/MusicCreation";
+import VideoCreation from "./pages/VideoCreation";
 import Library from "./pages/Library";
 import Auth from "./pages/Auth";
-import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -31,7 +31,7 @@ const App = () => (
             <Route path="/create/text" element={<TextCreation />} />
             <Route path="/create/image" element={<ImageCreation />} />
             <Route path="/create/music" element={<MusicCreation />} />
-            <Route path="/create/video" element={<ComingSoon title="Video Production" description="Produce clips and animations" />} />
+            <Route path="/create/video" element={<VideoCreation />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
