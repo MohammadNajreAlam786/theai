@@ -10,6 +10,7 @@ import ImageCreation from "./pages/ImageCreation";
 import MusicCreation from "./pages/MusicCreation";
 import VideoCreation from "./pages/VideoCreation";
 import Library from "./pages/Library";
+import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/library" element={<Library />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/create/text" element={<TextCreation />} />
             <Route path="/create/image" element={<ImageCreation />} />
             <Route path="/create/music" element={<MusicCreation />} />

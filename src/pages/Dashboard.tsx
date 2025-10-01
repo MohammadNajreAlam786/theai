@@ -98,6 +98,14 @@ const Dashboard = () => {
             <Button 
               variant="ghost" 
               size="icon" 
+              className="hover:text-primary transition-colors"
+              onClick={() => navigate('/profile')}
+            >
+              <User className="w-5 h-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
               className="hover:text-destructive transition-colors"
               onClick={handleSignOut}
             >
