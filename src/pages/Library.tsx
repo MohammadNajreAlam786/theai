@@ -9,6 +9,8 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { LikeButton } from "@/components/LikeButton";
+import { CommentsSection } from "@/components/CommentsSection";
 
 interface Creation {
   id: string;
@@ -208,7 +210,13 @@ const Library = () => {
                     </div>
                     <h3 className="font-bold mb-2">{creation.title}</h3>
                     {creation.type === 'image' ? <img src={creation.content} className="w-full h-48 object-cover rounded mb-4" /> : <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{creation.content}</p>}
-                    <div className="text-xs text-muted-foreground">{new Date(creation.created_at).toLocaleDateString()}</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-muted-foreground">{new Date(creation.created_at).toLocaleDateString()}</div>
+                      <div className="flex gap-2">
+                        <LikeButton creationId={creation.id} />
+                        <CommentsSection creationId={creation.id} />
+                      </div>
+                    </div>
                   </Card>
                 ))}
               </div>
@@ -222,6 +230,10 @@ const Library = () => {
                   <span className={`px-3 py-1 rounded-full text-xs ${getTypeColor(creation.type)} bg-clip-text text-transparent mb-4 inline-block`}>{creation.type}</span>
                   <h3 className="font-bold mb-2">{creation.title}</h3>
                   {creation.type === 'image' ? <img src={creation.content} className="w-full h-48 object-cover rounded mb-4" /> : <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{creation.content}</p>}
+                  <div className="flex gap-2 mt-4">
+                    <LikeButton creationId={creation.id} />
+                    <CommentsSection creationId={creation.id} />
+                  </div>
                 </Card>
               ))}
             </div>
