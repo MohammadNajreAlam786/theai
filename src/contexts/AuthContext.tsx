@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -18,7 +18,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
     // Set up auth state listener
@@ -55,19 +54,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
 
-      toast({
-        title: "Account created!",
-        description: "Welcome to MuseAI. Start creating now!",
-      });
+      toast.success("Welcome to MuseAI! Account created successfully.");
 
       return { error: null };
     } catch (error) {
       const err = error as Error;
-      toast({
-        title: "Sign up failed",
-        description: err.message,
-        variant: "destructive",
-      });
+      toast.error(err.message || "Sign up failed");
       return { error: err };
     }
   };
@@ -81,19 +73,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
 
-      toast({
-        title: "Welcome back!",
-        description: "Successfully signed in.",
-      });
+      toast.success("Welcome back! Successfully signed in.");
 
       return { error: null };
     } catch (error) {
       const err = error as Error;
-      toast({
-        title: "Sign in failed",
-        description: err.message,
-        variant: "destructive",
-      });
+      toast.error(err.message || "Sign in failed");
       return { error: err };
     }
   };
@@ -103,17 +88,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
-      toast({
-        title: "Signed out",
-        description: "Come back soon!",
-      });
+      toast.success("Signed out. Come back soon!");
     } catch (error) {
       const err = error as Error;
-      toast({
-        title: "Error",
-        description: err.message,
-        variant: "destructive",
-      });
+      toast.error(err.message || "Sign out failed");
     }
   };
 
