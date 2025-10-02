@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { LikeButton } from "@/components/LikeButton";
 import { CommentsSection } from "@/components/CommentsSection";
+import { CollectionManager } from "@/components/CollectionManager";
+import { AddToCollectionDialog } from "@/components/AddToCollectionDialog";
 
 interface Creation {
   id: string;
@@ -32,6 +34,7 @@ const Library = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCreation, setSelectedCreation] = useState<Creation | null>(null);
   const [activeTab, setActiveTab] = useState<'my' | 'discover'>('my');
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -43,14 +46,31 @@ const Library = () => {
       fetchCreations();
       fetchPublicCreations();
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, selectedCollectionId]);
 
   const fetchCreations = async () => {
     try {
-      const { data, error } = await supabase
-        .from('creations')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let query = supabase.from('creations').select('*');
+
+      // Filter by collection if one is selected
+      if (selectedCollectionId) {
+        const { data: collectionItems } = await supabase
+          .from('collection_items')
+          .select('creation_id')
+          .eq('collection_id', selectedCollectionId);
+
+        const creationIds = collectionItems?.map(item => item.creation_id) || [];
+        
+        if (creationIds.length === 0) {
+          setCreations([]);
+          setLoading(false);
+          return;
+        }
+
+        query = query.in('id', creationIds);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setCreations(data || []);
@@ -170,11 +190,22 @@ const Library = () => {
       </header>
 
       <main className="relative z-10 container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'my' | 'discover')}>
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
-            <TabsTrigger value="my">My Creations</TabsTrigger>
-            <TabsTrigger value="discover">Discover</TabsTrigger>
-          </TabsList>
+        <div className="grid lg:grid-cols-4 gap-8">
+          <aside className="lg:col-span-1">
+            <Card className="p-4 bg-card/50 backdrop-blur-xl sticky top-24">
+              <CollectionManager
+                selectedCollectionId={selectedCollectionId}
+                onCollectionSelect={setSelectedCollectionId}
+              />
+            </Card>
+          </aside>
+
+          <div className="lg:col-span-3">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'my' | 'discover')}>
+              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+                <TabsTrigger value="my">My Creations</TabsTrigger>
+                <TabsTrigger value="discover">Discover</TabsTrigger>
+              </TabsList>
 
           <TabsContent value="my">
             {creations.length === 0 ? (
@@ -195,6 +226,7 @@ const Library = () => {
                       </div>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedCreation(creation)}><Eye className="w-4 h-4" /></Button>
+                        <AddToCollectionDialog creationId={creation.id} />
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleTogglePublic(creation.id, creation.is_public)}><Share2 className="w-4 h-4" /></Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="w-4 h-4" /></Button></AlertDialogTrigger>
@@ -238,7 +270,9 @@ const Library = () => {
               ))}
             </div>
           </TabsContent>
-        </Tabs>
+            </Tabs>
+          </div>
+        </div>
 
         {selectedCreation && (
           <AlertDialog open={!!selectedCreation} onOpenChange={() => setSelectedCreation(null)}>
