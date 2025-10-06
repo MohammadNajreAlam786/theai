@@ -137,27 +137,6 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          <div className="text-center p-8 rounded-2xl bg-card/40 backdrop-blur-xl border border-border hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-glow-purple group">
-            <div className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform">
-              10M+
-            </div>
-            <div className="text-muted-foreground font-medium">Creations Generated</div>
-          </div>
-          <div className="text-center p-8 rounded-2xl bg-card/40 backdrop-blur-xl border border-border hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-glow-cyan group">
-            <div className="text-5xl font-bold bg-gradient-secondary bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform">
-              500K+
-            </div>
-            <div className="text-muted-foreground font-medium">Active Creators</div>
-          </div>
-          <div className="text-center p-8 rounded-2xl bg-card/40 backdrop-blur-xl border border-border hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-glow-pink group">
-            <div className="text-5xl font-bold bg-gradient-accent bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform">
-              4.9★
-            </div>
-            <div className="text-muted-foreground font-medium">User Rating</div>
-          </div>
-        </div>
       </main>
     </div>
   );
