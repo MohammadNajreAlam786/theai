@@ -46,9 +46,24 @@ const MusicCreation = () => {
       });
     } catch (error: any) {
       console.error("Error generating music:", error);
+      
+      let errorTitle = "Generation failed";
+      let errorDescription = "Failed to generate music. Please try again.";
+      
+      // Check for specific error types
+      if (error.message?.includes("503") || error.message?.toLowerCase().includes("service unavailable")) {
+        errorTitle = "Service temporarily unavailable";
+        errorDescription = "The music generation service is currently experiencing high demand. Please try again in a few moments.";
+      } else if (error.message?.includes("429")) {
+        errorTitle = "Too many requests";
+        errorDescription = "Please wait a moment before trying again.";
+      } else if (error.message) {
+        errorDescription = error.message;
+      }
+      
       toast({
-        title: "Generation failed",
-        description: error.message || "Failed to generate music. Please try again.",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive",
       });
     } finally {

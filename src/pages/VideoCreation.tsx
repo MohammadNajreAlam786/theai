@@ -51,7 +51,20 @@ const VideoCreation = () => {
       }
     } catch (error: any) {
       console.error('Error generating video:', error);
-      toast.error(error.message || "Failed to generate video");
+      
+      let errorMessage = "Failed to generate video";
+      
+      if (error.message?.includes("not configured")) {
+        errorMessage = "Video generation is not configured. Please contact support to enable this feature.";
+      } else if (error.message?.includes("503") || error.message?.toLowerCase().includes("service unavailable")) {
+        errorMessage = "The video generation service is temporarily unavailable. Please try again later.";
+      } else if (error.message?.includes("429")) {
+        errorMessage = "Too many requests. Please wait a moment before trying again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
     }
