@@ -22,53 +22,11 @@ const MusicCreation = () => {
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) {
-      toast({
-        title: "Please enter a prompt",
-        description: "Describe the music you want to create",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-music", {
-        body: { prompt: prompt.trim() },
-      });
-
-      if (error) throw error;
-
-      setAudioUrl(data.audioUrl);
-      toast({
-        title: "Music generated!",
-        description: "Your music is ready to play",
-      });
-    } catch (error: any) {
-      console.error("Error generating music:", error);
-      
-      let errorTitle = "Generation failed";
-      let errorDescription = "Failed to generate music. Please try again.";
-      
-      // Check for specific error types
-      if (error.message?.includes("503") || error.message?.toLowerCase().includes("service unavailable")) {
-        errorTitle = "Service temporarily unavailable";
-        errorDescription = "The music generation service is currently experiencing high demand. Please try again in a few moments.";
-      } else if (error.message?.includes("429")) {
-        errorTitle = "Too many requests";
-        errorDescription = "Please wait a moment before trying again.";
-      } else if (error.message) {
-        errorDescription = error.message;
-      }
-      
-      toast({
-        title: errorTitle,
-        description: errorDescription,
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+    toast({
+      title: "Feature unavailable",
+      description: "Music generation is currently not available",
+      variant: "destructive",
+    });
   };
 
   const togglePlayPause = () => {
@@ -169,21 +127,12 @@ const MusicCreation = () => {
           {/* Generate Button */}
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating}
+            disabled={true}
             className="w-full gap-2"
             size="lg"
           >
-            {isGenerating ? (
-              <>
-                <LoadingSpinner size="sm" />
-                Generating Music...
-              </>
-            ) : (
-              <>
-                <Music className="w-5 h-5" />
-                Generate Music
-              </>
-            )}
+            <Music className="w-5 h-5" />
+            Music Generation Unavailable
           </Button>
 
           {/* Audio Player */}
