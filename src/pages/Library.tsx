@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Sparkles, Trash2, Eye, Share2, Globe } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Sparkles, Trash2, Eye, Share2, Globe, Search, Grid3x3, List, Filter } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -13,6 +14,7 @@ import { LikeButton } from "@/components/LikeButton";
 import { CommentsSection } from "@/components/CommentsSection";
 import { CollectionManager } from "@/components/CollectionManager";
 import { AddToCollectionDialog } from "@/components/AddToCollectionDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Creation {
   id: string;
@@ -35,6 +37,9 @@ const Library = () => {
   const [selectedCreation, setSelectedCreation] = useState<Creation | null>(null);
   const [activeTab, setActiveTab] = useState<'my' | 'discover'>('my');
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -173,6 +178,23 @@ const Library = () => {
     return colors[type as keyof typeof colors] || 'bg-gradient-primary';
   };
 
+  const filteredCreations = useMemo(() => {
+    let filtered = activeTab === 'my' ? creations : publicCreations;
+
+    if (searchQuery) {
+      filtered = filtered.filter(c => 
+        c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.prompt.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(c => c.type === typeFilter);
+    }
+
+    return filtered;
+  }, [creations, publicCreations, searchQuery, typeFilter, activeTab]);
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-mesh opacity-30 pointer-events-none" />
@@ -207,46 +229,102 @@ const Library = () => {
                 <TabsTrigger value="discover">Discover</TabsTrigger>
               </TabsList>
 
+              <div className="mb-6 space-y-4">
+                <div className="flex gap-3 flex-wrap">
+                  <div className="relative flex-1 min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by title or prompt..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <Filter className="w-4 h-4 mr-2" />
+                      <SelectValue placeholder="All types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All types</SelectItem>
+                      <SelectItem value="text">Text</SelectItem>
+                      <SelectItem value="image">Image</SelectItem>
+                      <SelectItem value="music">Music</SelectItem>
+                      <SelectItem value="video">Video</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex gap-1 border border-border rounded-md p-1">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setViewMode('grid')}
+                    >
+                      <Grid3x3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setViewMode('list')}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
           <TabsContent value="my">
-            {creations.length === 0 ? (
+            {filteredCreations.length === 0 ? (
               <Card className="max-w-2xl mx-auto p-12 text-center bg-card/50 backdrop-blur-xl">
                 <Sparkles className="w-16 h-16 mx-auto mb-4 text-primary opacity-50" />
-                <h2 className="text-2xl font-bold mb-2">Your library is empty</h2>
-                <p className="text-muted-foreground mb-6">Start creating to see your work here</p>
-                <Button variant="hero" onClick={() => navigate('/dashboard')}>Start Creating</Button>
+                <h2 className="text-2xl font-bold mb-2">{creations.length === 0 ? "Your library is empty" : "No results found"}</h2>
+                <p className="text-muted-foreground mb-6">{creations.length === 0 ? "Start creating to see your work here" : "Try adjusting your search or filters"}</p>
+                {creations.length === 0 && <Button variant="hero" onClick={() => navigate('/dashboard')}>Start Creating</Button>}
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {creations.map((creation, i) => (
-                  <Card key={creation.id} className="p-6 bg-card/50 backdrop-blur-xl animate-fade-in" style={{animationDelay: `${i*0.05}s`}}>
-                    <div className="flex justify-between mb-4">
-                      <div className="flex gap-2">
-                        <span className={`px-3 py-1 rounded-full text-xs ${getTypeColor(creation.type)} bg-clip-text text-transparent`}>{creation.type}</span>
-                        {creation.is_public && <Globe className="w-4 h-4 text-primary" />}
+              <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+                {filteredCreations.map((creation, i) => (
+                  <Card key={creation.id} className={`p-6 bg-card/50 backdrop-blur-xl animate-fade-in ${viewMode === 'list' ? 'flex gap-6 items-start' : ''}`} style={{animationDelay: `${i*0.05}s`}}>
+                    {viewMode === 'list' && creation.type === 'image' && (
+                      <img src={creation.content} className="w-32 h-32 object-cover rounded flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between mb-4">
+                        <div className="flex gap-2 items-center">
+                          <span className={`px-3 py-1 rounded-full text-xs ${getTypeColor(creation.type)} bg-clip-text text-transparent`}>{creation.type}</span>
+                          {creation.is_public && <Globe className="w-4 h-4 text-primary" />}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedCreation(creation)}><Eye className="w-4 h-4" /></Button>
+                          <AddToCollectionDialog creationId={creation.id} />
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleTogglePublic(creation.id, creation.is_public)}><Share2 className="w-4 h-4" /></Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="w-4 h-4" /></Button></AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader><AlertDialogTitle>Delete?</AlertDialogTitle></AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(creation.id)}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedCreation(creation)}><Eye className="w-4 h-4" /></Button>
-                        <AddToCollectionDialog creationId={creation.id} />
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleTogglePublic(creation.id, creation.is_public)}><Share2 className="w-4 h-4" /></Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="w-4 h-4" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>Delete?</AlertDialogTitle></AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(creation.id)}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                    <h3 className="font-bold mb-2">{creation.title}</h3>
-                    {creation.type === 'image' ? <img src={creation.content} className="w-full h-48 object-cover rounded mb-4" /> : <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{creation.content}</p>}
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs text-muted-foreground">{new Date(creation.created_at).toLocaleDateString()}</div>
-                      <div className="flex gap-2">
-                        <LikeButton creationId={creation.id} />
-                        <CommentsSection creationId={creation.id} />
+                      <h3 className="font-bold mb-2">{creation.title}</h3>
+                      {viewMode === 'grid' && creation.type === 'image' ? (
+                        <img src={creation.content} className="w-full h-48 object-cover rounded mb-4" />
+                      ) : viewMode === 'grid' ? (
+                        <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{creation.content}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{creation.prompt}</p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-muted-foreground">{new Date(creation.created_at).toLocaleDateString()}</div>
+                        <div className="flex gap-2">
+                          <LikeButton creationId={creation.id} />
+                          <CommentsSection creationId={creation.id} />
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -256,15 +334,26 @@ const Library = () => {
           </TabsContent>
 
           <TabsContent value="discover">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {publicCreations.map((creation, i) => (
-                <Card key={creation.id} className="p-6 bg-card/50 backdrop-blur-xl animate-fade-in cursor-pointer" style={{animationDelay: `${i*0.05}s`}} onClick={() => setSelectedCreation(creation)}>
-                  <span className={`px-3 py-1 rounded-full text-xs ${getTypeColor(creation.type)} bg-clip-text text-transparent mb-4 inline-block`}>{creation.type}</span>
-                  <h3 className="font-bold mb-2">{creation.title}</h3>
-                  {creation.type === 'image' ? <img src={creation.content} className="w-full h-48 object-cover rounded mb-4" /> : <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{creation.content}</p>}
-                  <div className="flex gap-2 mt-4">
-                    <LikeButton creationId={creation.id} />
-                    <CommentsSection creationId={creation.id} />
+            <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+              {filteredCreations.map((creation, i) => (
+                <Card key={creation.id} className={`p-6 bg-card/50 backdrop-blur-xl animate-fade-in cursor-pointer ${viewMode === 'list' ? 'flex gap-6 items-start' : ''}`} style={{animationDelay: `${i*0.05}s`}} onClick={() => setSelectedCreation(creation)}>
+                  {viewMode === 'list' && creation.type === 'image' && (
+                    <img src={creation.content} className="w-32 h-32 object-cover rounded flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <span className={`px-3 py-1 rounded-full text-xs ${getTypeColor(creation.type)} bg-clip-text text-transparent mb-4 inline-block`}>{creation.type}</span>
+                    <h3 className="font-bold mb-2">{creation.title}</h3>
+                    {viewMode === 'grid' && creation.type === 'image' ? (
+                      <img src={creation.content} className="w-full h-48 object-cover rounded mb-4" />
+                    ) : viewMode === 'grid' ? (
+                      <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{creation.content}</p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{creation.prompt}</p>
+                    )}
+                    <div className="flex gap-2 mt-4">
+                      <LikeButton creationId={creation.id} />
+                      <CommentsSection creationId={creation.id} />
+                    </div>
                   </div>
                 </Card>
               ))}
