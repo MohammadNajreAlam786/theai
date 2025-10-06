@@ -6,5 +6,8 @@ verify_jwt = true
 [functions.generate-image]
 verify_jwt = true
 
+[functions.generate-music]
+verify_jwt = true
+
 [functions.generate-video]
 verify_jwt = true

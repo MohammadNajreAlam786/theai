@@ -22,11 +22,39 @@ const MusicCreation = () => {
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
   const handleGenerate = async () => {
-    toast({
-      title: "Feature unavailable",
-      description: "Music generation is currently not available",
-      variant: "destructive",
-    });
+    if (!prompt.trim()) {
+      toast({
+        title: "Please enter a prompt",
+        description: "Describe the music you want to create",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-music", {
+        body: { prompt: prompt.trim() },
+      });
+
+      if (error) throw error;
+
+      setAudioUrl(data.audioUrl);
+      toast({
+        title: "Music generated!",
+        description: "Your music is ready to play",
+      });
+    } catch (error: any) {
+      console.error("Error generating music:", error);
+      
+      toast({
+        title: "Generation failed",
+        description: error.message || "Failed to generate music. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const togglePlayPause = () => {
@@ -127,12 +155,21 @@ const MusicCreation = () => {
           {/* Generate Button */}
           <Button
             onClick={handleGenerate}
-            disabled={true}
+            disabled={isGenerating}
             className="w-full gap-2"
             size="lg"
           >
-            <Music className="w-5 h-5" />
-            Music Generation Unavailable
+            {isGenerating ? (
+              <>
+                <LoadingSpinner size="sm" />
+                Generating Music...
+              </>
+            ) : (
+              <>
+                <Music className="w-5 h-5" />
+                Generate Music
+              </>
+            )}
           </Button>
 
           {/* Audio Player */}
