@@ -179,21 +179,18 @@ const Library = () => {
   };
 
   const filteredCreations = useMemo(() => {
-    let filtered = activeTab === 'my' ? creations : publicCreations;
-
-    if (searchQuery) {
-      filtered = filtered.filter(c => 
+    const sourceCreations = activeTab === 'my' ? creations : publicCreations;
+    
+    return sourceCreations.filter(c => {
+      const matchesSearch = !searchQuery || 
         c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.prompt.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(c => c.type === typeFilter);
-    }
-
-    return filtered;
-  }, [creations, publicCreations, searchQuery, typeFilter, activeTab]);
+        c.prompt.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesType = typeFilter === 'all' || c.type === typeFilter;
+      
+      return matchesSearch && matchesType;
+    });
+  }, [activeTab, creations, publicCreations, searchQuery, typeFilter]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
