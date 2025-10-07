@@ -158,16 +158,6 @@ const Library = () => {
     }
   };
 
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
   const getTypeColor = (type: string) => {
     const colors = {
       text: 'bg-gradient-primary',
@@ -191,6 +181,16 @@ const Library = () => {
       return matchesSearch && matchesType;
     });
   }, [activeTab, creations, publicCreations, searchQuery, typeFilter]);
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
