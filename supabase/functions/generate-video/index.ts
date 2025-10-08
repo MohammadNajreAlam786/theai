@@ -22,7 +22,7 @@ serve(async (req) => {
     console.log('Generating video with prompt:', prompt);
 
     // Create video generation task
-    const createResponse = await fetch('https://api.runwayml.com/v1/video_generations', {
+    const createResponse = await fetch('https://api.dev.runwayml.com/v1/video_generations', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RUNWAY_API_KEY}`,
@@ -53,7 +53,7 @@ serve(async (req) => {
     while (!videoUrl && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 5000));
       
-      const statusResponse = await fetch(`https://api.runwayml.com/v1/video_generations/${taskId}`, {
+      const statusResponse = await fetch(`https://api.dev.runwayml.com/v1/video_generations/${taskId}`, {
         headers: {
           'Authorization': `Bearer ${RUNWAY_API_KEY}`,
         },
