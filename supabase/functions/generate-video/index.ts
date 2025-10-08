@@ -21,8 +21,10 @@ serve(async (req) => {
 
     console.log('Generating video with prompt:', prompt);
 
-    // Create video generation task
-    const createResponse = await fetch('https://api.dev.runwayml.com/v1/video_generations', {
+    // Step 1: Generate an image from the prompt (text_to_image)
+    const ratio = "1280:720"; // Use resolution-style ratio per 2024-11-06 API version
+
+    const imageCreateResponse = await fetch('https://api.dev.runwayml.com/v1/text_to_image', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RUNWAY_API_KEY}`,
@@ -30,55 +32,125 @@ serve(async (req) => {
         'X-Runway-Version': '2024-11-06',
       },
       body: JSON.stringify({
-        prompt,
-        duration: 5,
-        aspect_ratio: "16:9"
+        model: 'gen4_image',
+        prompt_text: prompt,
+        ratio,
       }),
     });
 
-    if (!createResponse.ok) {
-      const errorText = await createResponse.text();
-      console.error('Runway API error:', errorText);
-      throw new Error(`Failed to create video: ${errorText}`);
+    if (!imageCreateResponse.ok) {
+      const errorText = await imageCreateResponse.text();
+      console.error('Runway API (text_to_image) error:', errorText);
+      throw new Error(`Failed to create image: ${errorText}`);
     }
 
-    const createData = await createResponse.json();
-    const taskId = createData.id;
-    console.log('Video generation task created:', taskId);
+    const imageCreateData = await imageCreateResponse.json();
+    const imageTaskId = imageCreateData.id;
+    console.log('Image generation task created:', imageTaskId);
 
-    // Poll for completion
-    let videoUrl = null;
-    let attempts = 0;
-    const maxAttempts = 60;
+    // Poll for image completion via tasks endpoint
+    let imageUrl: string | null = null;
+    {
+      let attempts = 0;
+      const maxAttempts = 60;
+      while (!imageUrl && attempts < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    while (!videoUrl && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      
-      const statusResponse = await fetch(`https://api.dev.runwayml.com/v1/video_generations/${taskId}`, {
-        headers: {
-          'Authorization': `Bearer ${RUNWAY_API_KEY}`,
-          'X-Runway-Version': '2024-11-06',
-        },
-      });
+        const imgStatusResponse = await fetch(`https://api.dev.runwayml.com/v1/tasks/${imageTaskId}`, {
+          headers: {
+            'Authorization': `Bearer ${RUNWAY_API_KEY}`,
+            'X-Runway-Version': '2024-11-06',
+          },
+        });
 
-      if (!statusResponse.ok) {
-        throw new Error('Failed to check video status');
+        if (!imgStatusResponse.ok) {
+          throw new Error('Failed to check image task status');
+        }
+
+        const imgStatusData = await imgStatusResponse.json();
+        console.log('Image task status:', imgStatusData.status);
+
+        const status = (imgStatusData.status || '').toString().toUpperCase();
+        if (status === 'SUCCEEDED' && imgStatusData.output) {
+          // output could be an array of URLs or array of objects
+          const first = imgStatusData.output[0];
+          imageUrl = typeof first === 'string' ? first : (first?.url || first?.imageURL || null);
+        } else if (status === 'FAILED') {
+          throw new Error('Image generation failed');
+        }
+
+        attempts++;
       }
 
-      const statusData = await statusResponse.json();
-      console.log('Video status:', statusData.status);
-
-      if (statusData.status === 'succeeded' && statusData.output) {
-        videoUrl = statusData.output[0];
-      } else if (statusData.status === 'failed') {
-        throw new Error('Video generation failed');
+      if (!imageUrl) {
+        throw new Error('Image generation timed out');
       }
-
-      attempts++;
     }
 
-    if (!videoUrl) {
-      throw new Error('Video generation timed out');
+    console.log('Image generated successfully:', imageUrl);
+
+    // Step 2: Generate a video from the image (image_to_video)
+    const videoCreateResponse = await fetch('https://api.dev.runwayml.com/v1/image_to_video', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RUNWAY_API_KEY}`,
+        'Content-Type': 'application/json',
+        'X-Runway-Version': '2024-11-06',
+      },
+      body: JSON.stringify({
+        model: 'gen4_turbo',
+        prompt_image: imageUrl,
+        prompt_text: prompt,
+        ratio,
+      }),
+    });
+
+    if (!videoCreateResponse.ok) {
+      const errorText = await videoCreateResponse.text();
+      console.error('Runway API (image_to_video) error:', errorText);
+      throw new Error(`Failed to create video task: ${errorText}`);
+    }
+
+    const videoCreateData = await videoCreateResponse.json();
+    const videoTaskId = videoCreateData.id;
+    console.log('Video generation task created:', videoTaskId);
+
+    // Poll for video completion via tasks endpoint
+    let videoUrl: string | null = null;
+    {
+      let attempts = 0;
+      const maxAttempts = 60;
+      while (!videoUrl && attempts < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+
+        const vidStatusResponse = await fetch(`https://api.dev.runwayml.com/v1/tasks/${videoTaskId}`, {
+          headers: {
+            'Authorization': `Bearer ${RUNWAY_API_KEY}`,
+            'X-Runway-Version': '2024-11-06',
+          },
+        });
+
+        if (!vidStatusResponse.ok) {
+          throw new Error('Failed to check video task status');
+        }
+
+        const vidStatusData = await vidStatusResponse.json();
+        console.log('Video task status:', vidStatusData.status);
+
+        const status = (vidStatusData.status || '').toString().toUpperCase();
+        if (status === 'SUCCEEDED' && vidStatusData.output) {
+          const first = vidStatusData.output[0];
+          videoUrl = typeof first === 'string' ? first : (first?.url || first?.videoURL || null);
+        } else if (status === 'FAILED') {
+          throw new Error('Video generation failed');
+        }
+
+        attempts++;
+      }
+
+      if (!videoUrl) {
+        throw new Error('Video generation timed out');
+      }
     }
 
     console.log('Video generated successfully:', videoUrl);
