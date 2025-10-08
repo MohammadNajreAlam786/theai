@@ -27,6 +27,7 @@ serve(async (req) => {
       headers: {
         'Authorization': `Bearer ${RUNWAY_API_KEY}`,
         'Content-Type': 'application/json',
+        'X-Runway-Version': '2024-11-06',
       },
       body: JSON.stringify({
         prompt,
@@ -56,6 +57,7 @@ serve(async (req) => {
       const statusResponse = await fetch(`https://api.dev.runwayml.com/v1/video_generations/${taskId}`, {
         headers: {
           'Authorization': `Bearer ${RUNWAY_API_KEY}`,
+          'X-Runway-Version': '2024-11-06',
         },
       });
 
