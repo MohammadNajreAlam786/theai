@@ -42,10 +42,16 @@ serve(async (req) => {
     }
 
     const createData = await createResponse.json();
+    console.log('Suno API response:', JSON.stringify(createData));
     
-    if (createData.code !== 200 || !createData.data?.taskId) {
-      console.error('Invalid Suno API response:', createData);
-      throw new Error('No task ID returned from Suno API');
+    if (createData.code !== 200) {
+      console.error('Suno API returned non-200 code:', createData);
+      throw new Error(`Suno API error: ${createData.msg || 'Unknown error'}`);
+    }
+    
+    if (!createData.data?.taskId) {
+      console.error('No task ID in response. Full response:', JSON.stringify(createData));
+      throw new Error(`No task ID returned from Suno API. Response: ${JSON.stringify(createData)}`);
     }
 
     const taskId = createData.data.taskId;
