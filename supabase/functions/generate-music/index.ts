@@ -12,43 +12,50 @@ serve(async (req) => {
 
   try {
     const { prompt } = await req.json();
-    const SUNO_API_KEY = Deno.env.get('SUNO_API_KEY');
+    const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
 
-    if (!SUNO_API_KEY) {
-      throw new Error('SUNO_API_KEY is not configured');
+    if (!ELEVENLABS_API_KEY) {
+      throw new Error('ELEVENLABS_API_KEY is not configured');
     }
 
-    console.log('Generating music with prompt:', prompt);
+    console.log('Generating audio with ElevenLabs:', prompt);
 
-    // Create music generation request
-    const response = await fetch('https://api.suno.ai/v1/generate', {
+    // Using ElevenLabs Text to Speech API
+    // Voice ID: Aria (9BWtsMINqrJLrRacOk9x) - a versatile, clear voice
+    const voiceId = '9BWtsMINqrJLrRacOk9x';
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${SUNO_API_KEY}`,
+        'xi-api-key': ELEVENLABS_API_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt,
-        make_instrumental: false,
-        wait_audio: true,
+        text: prompt,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+        },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Suno API error:', response.status, errorText);
-      throw new Error(`Suno API error: ${response.status}`);
+      console.error('ElevenLabs API error:', response.status, errorText);
+      throw new Error(`ElevenLabs API error: ${response.status}`);
     }
 
-    const data = await response.json();
-    console.log('Music generation response:', data);
+    // ElevenLabs returns audio directly as a binary stream
+    const audioBlob = await response.arrayBuffer();
+    
+    // Convert to base64 for easier handling
+    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBlob)));
+    const audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
 
-    if (!data.audio_url) {
-      throw new Error('No audio URL in response');
-    }
+    console.log('Audio generated successfully');
 
     return new Response(
-      JSON.stringify({ audioUrl: data.audio_url }),
+      JSON.stringify({ audioUrl }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
