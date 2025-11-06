@@ -13,147 +13,123 @@ serve(async (req) => {
 
   try {
     const { prompt } = await req.json();
-    const RUNWAY_API_KEY = Deno.env.get('RUNWAY_API_KEY');
+    const STABILITY_API_KEY = Deno.env.get('STABILITY_API_KEY');
 
-    if (!RUNWAY_API_KEY) {
-      throw new Error('RUNWAY_API_KEY is not configured');
+    if (!STABILITY_API_KEY) {
+      throw new Error('STABILITY_API_KEY is not configured');
     }
 
-    console.log('Generating video with prompt:', prompt);
+    console.log('Generating video with Stability AI:', prompt);
 
-    // Step 1: Generate an image from the prompt (text_to_image)
-    const ratio = "1280:720"; // Use resolution-style ratio per 2024-11-06 API version
-
-    const imageCreateResponse = await fetch('https://api.dev.runwayml.com/v1/text_to_image', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RUNWAY_API_KEY}`,
-        'Content-Type': 'application/json',
-        'X-Runway-Version': '2024-11-06',
-      },
-      body: JSON.stringify({
-        model: 'gen4_image',
-        prompt_text: prompt,
-        ratio,
-      }),
-    });
-
-    if (!imageCreateResponse.ok) {
-      const errorText = await imageCreateResponse.text();
-      console.error('Runway API (text_to_image) error:', errorText);
-      throw new Error(`Failed to create image: ${errorText}`);
-    }
-
-    const imageCreateData = await imageCreateResponse.json();
-    const imageTaskId = imageCreateData.id;
-    console.log('Image generation task created:', imageTaskId);
-
-    // Poll for image completion via tasks endpoint
-    let imageUrl: string | null = null;
-    {
-      let attempts = 0;
-      const maxAttempts = 60;
-      while (!imageUrl && attempts < maxAttempts) {
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-
-        const imgStatusResponse = await fetch(`https://api.dev.runwayml.com/v1/tasks/${imageTaskId}`, {
-          headers: {
-            'Authorization': `Bearer ${RUNWAY_API_KEY}`,
-            'X-Runway-Version': '2024-11-06',
-          },
-        });
-
-        if (!imgStatusResponse.ok) {
-          throw new Error('Failed to check image task status');
-        }
-
-        const imgStatusData = await imgStatusResponse.json();
-        console.log('Image task status:', imgStatusData.status);
-
-        const status = (imgStatusData.status || '').toString().toUpperCase();
-        if (status === 'SUCCEEDED' && imgStatusData.output) {
-          // output could be an array of URLs or array of objects
-          const first = imgStatusData.output[0];
-          imageUrl = typeof first === 'string' ? first : (first?.url || first?.imageURL || null);
-        } else if (status === 'FAILED') {
-          throw new Error('Image generation failed');
-        }
-
-        attempts++;
+    // Step 1: Generate an image from the prompt using Stability AI
+    const imageResponse = await fetch(
+      'https://api.stability.ai/v2beta/stable-image/generate/core',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${STABILITY_API_KEY}`,
+          'Accept': 'application/json',
+        },
+        body: (() => {
+          const formData = new FormData();
+          formData.append('prompt', prompt);
+          formData.append('output_format', 'png');
+          formData.append('aspect_ratio', '16:9');
+          return formData;
+        })(),
       }
+    );
 
-      if (!imageUrl) {
-        throw new Error('Image generation timed out');
+    if (!imageResponse.ok) {
+      const errorText = await imageResponse.text();
+      console.error('Stability AI image generation error:', errorText);
+      throw new Error(`Failed to generate image: ${errorText}`);
+    }
+
+    const imageData = await imageResponse.json();
+    const imageBase64 = imageData.image;
+    console.log('Image generated successfully');
+
+    // Step 2: Generate video from the image using Stability AI Video
+    const videoResponse = await fetch(
+      'https://api.stability.ai/v2beta/image-to-video',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${STABILITY_API_KEY}`,
+        },
+        body: (() => {
+          const formData = new FormData();
+          // Convert base64 to blob
+          const binaryString = atob(imageBase64);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: 'image/png' });
+          formData.append('image', blob, 'image.png');
+          formData.append('seed', '0');
+          formData.append('cfg_scale', '1.8');
+          formData.append('motion_bucket_id', '127');
+          return formData;
+        })(),
       }
+    );
+
+    if (!videoResponse.ok) {
+      const errorText = await videoResponse.text();
+      console.error('Stability AI video generation error:', errorText);
+      throw new Error(`Failed to generate video: ${errorText}`);
     }
 
-    console.log('Image generated successfully:', imageUrl);
+    const videoData = await videoResponse.json();
+    const generationId = videoData.id;
+    console.log('Video generation started:', generationId);
 
-    // Step 2: Generate a video from the image (image_to_video)
-    const videoCreateResponse = await fetch('https://api.dev.runwayml.com/v1/image_to_video', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RUNWAY_API_KEY}`,
-        'Content-Type': 'application/json',
-        'X-Runway-Version': '2024-11-06',
-      },
-      body: JSON.stringify({
-        model: 'gen4_turbo',
-        prompt_image: imageUrl,
-        prompt_text: prompt,
-        ratio,
-      }),
-    });
-
-    if (!videoCreateResponse.ok) {
-      const errorText = await videoCreateResponse.text();
-      console.error('Runway API (image_to_video) error:', errorText);
-      throw new Error(`Failed to create video task: ${errorText}`);
-    }
-
-    const videoCreateData = await videoCreateResponse.json();
-    const videoTaskId = videoCreateData.id;
-    console.log('Video generation task created:', videoTaskId);
-
-    // Poll for video completion via tasks endpoint
+    // Poll for video completion
     let videoUrl: string | null = null;
-    {
-      let attempts = 0;
-      const maxAttempts = 60;
-      while (!videoUrl && attempts < maxAttempts) {
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+    let attempts = 0;
+    const maxAttempts = 120;
 
-        const vidStatusResponse = await fetch(`https://api.dev.runwayml.com/v1/tasks/${videoTaskId}`, {
+    while (!videoUrl && attempts < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, 10000)); // Check every 10 seconds
+
+      const resultResponse = await fetch(
+        `https://api.stability.ai/v2beta/image-to-video/result/${generationId}`,
+        {
+          method: 'GET',
           headers: {
-            'Authorization': `Bearer ${RUNWAY_API_KEY}`,
-            'X-Runway-Version': '2024-11-06',
+            'Authorization': `Bearer ${STABILITY_API_KEY}`,
+            'Accept': 'video/*',
           },
-        });
-
-        if (!vidStatusResponse.ok) {
-          throw new Error('Failed to check video task status');
         }
+      );
 
-        const vidStatusData = await vidStatusResponse.json();
-        console.log('Video task status:', vidStatusData.status);
-
-        const status = (vidStatusData.status || '').toString().toUpperCase();
-        if (status === 'SUCCEEDED' && vidStatusData.output) {
-          const first = vidStatusData.output[0];
-          videoUrl = typeof first === 'string' ? first : (first?.url || first?.videoURL || null);
-        } else if (status === 'FAILED') {
-          throw new Error('Video generation failed');
-        }
-
+      if (resultResponse.status === 202) {
+        console.log('Video still processing...');
         attempts++;
+        continue;
       }
 
-      if (!videoUrl) {
-        throw new Error('Video generation timed out');
+      if (!resultResponse.ok) {
+        const errorText = await resultResponse.text();
+        console.error('Stability AI result fetch error:', errorText);
+        throw new Error(`Failed to fetch video result: ${errorText}`);
       }
+
+      // Video is ready, convert to base64
+      const videoBlob = await resultResponse.arrayBuffer();
+      const base64Video = btoa(String.fromCharCode(...new Uint8Array(videoBlob)));
+      videoUrl = `data:video/mp4;base64,${base64Video}`;
+      console.log('Video generated successfully');
+      break;
     }
 
-    console.log('Video generated successfully:', videoUrl);
+    if (!videoUrl) {
+      throw new Error('Video generation timed out');
+    }
+
+    console.log('Video generation complete');
 
     return new Response(
       JSON.stringify({ videoUrl }),
