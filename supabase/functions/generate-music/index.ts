@@ -12,47 +12,85 @@ serve(async (req) => {
 
   try {
     const { prompt } = await req.json();
-    const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
+    const SUNO_API_KEY = Deno.env.get('SUNO_API_KEY');
 
-    if (!ELEVENLABS_API_KEY) {
-      throw new Error('ELEVENLABS_API_KEY is not configured');
+    if (!SUNO_API_KEY) {
+      throw new Error('SUNO_API_KEY is not configured');
     }
 
-    console.log('Generating audio with ElevenLabs:', prompt);
+    console.log('Generating music with Suno AI:', prompt);
 
-    // Using ElevenLabs Text to Speech API
-    // Voice ID: Aria (9BWtsMINqrJLrRacOk9x) - a versatile, clear voice
-    const voiceId = '9BWtsMINqrJLrRacOk9x';
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    // Step 1: Create music generation request
+    const createResponse = await fetch('https://api.suno.ai/v1/music/generate', {
       method: 'POST',
       headers: {
-        'xi-api-key': ELEVENLABS_API_KEY,
+        'Authorization': `Bearer ${SUNO_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        text: prompt,
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
-        },
+        prompt: prompt,
+        make_instrumental: false,
+        wait_audio: false
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('ElevenLabs API error:', response.status, errorText);
-      throw new Error(`ElevenLabs API error: ${response.status}`);
+    if (!createResponse.ok) {
+      const errorText = await createResponse.text();
+      console.error('Suno API create error:', createResponse.status, errorText);
+      throw new Error(`Suno API create error: ${createResponse.status}`);
     }
 
-    // ElevenLabs returns audio directly as a binary stream
-    const audioBlob = await response.arrayBuffer();
+    const createData = await createResponse.json();
+    const songId = createData.id || createData[0]?.id;
     
-    // Convert to base64 for easier handling
-    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBlob)));
-    const audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
+    if (!songId) {
+      throw new Error('No song ID returned from Suno API');
+    }
 
-    console.log('Audio generated successfully');
+    console.log('Music generation started:', songId);
+
+    // Step 2: Poll for completion
+    let audioUrl: string | null = null;
+    let attempts = 0;
+    const maxAttempts = 60; // 5 minutes max
+
+    while (!audioUrl && attempts < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, 5000)); // Check every 5 seconds
+
+      const statusResponse = await fetch(`https://api.suno.ai/v1/music/${songId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${SUNO_API_KEY}`,
+        },
+      });
+
+      if (!statusResponse.ok) {
+        console.error('Suno API status check error:', statusResponse.status);
+        attempts++;
+        continue;
+      }
+
+      const statusData = await statusResponse.json();
+      
+      if (statusData.status === 'complete' && statusData.audio_url) {
+        // Download the audio file
+        const audioResponse = await fetch(statusData.audio_url);
+        const audioBlob = await audioResponse.arrayBuffer();
+        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBlob)));
+        audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
+        console.log('Music generated successfully');
+        break;
+      } else if (statusData.status === 'error' || statusData.status === 'failed') {
+        throw new Error('Music generation failed');
+      }
+
+      console.log('Music still generating...');
+      attempts++;
+    }
+
+    if (!audioUrl) {
+      throw new Error('Music generation timed out');
+    }
 
     return new Response(
       JSON.stringify({ audioUrl }),
