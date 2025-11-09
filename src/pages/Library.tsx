@@ -311,8 +311,16 @@ const Library = () => {
                       <h3 className="font-bold mb-2">{creation.title}</h3>
                       {viewMode === 'grid' && creation.type === 'image' ? (
                         <img src={creation.content} className="w-full h-48 object-cover rounded mb-4" />
+                      ) : viewMode === 'grid' && creation.type === 'music' ? (
+                        <audio controls className="w-full mb-4" src={creation.content}>
+                          Your browser does not support the audio element.
+                        </audio>
                       ) : viewMode === 'grid' ? (
                         <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{creation.content}</p>
+                      ) : creation.type === 'music' ? (
+                        <audio controls className="w-full mb-4" src={creation.content}>
+                          Your browser does not support the audio element.
+                        </audio>
                       ) : (
                         <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{creation.prompt}</p>
                       )}
@@ -342,8 +350,16 @@ const Library = () => {
                     <h3 className="font-bold mb-2">{creation.title}</h3>
                     {viewMode === 'grid' && creation.type === 'image' ? (
                       <img src={creation.content} className="w-full h-48 object-cover rounded mb-4" />
+                    ) : viewMode === 'grid' && creation.type === 'music' ? (
+                      <audio controls className="w-full mb-4" src={creation.content}>
+                        Your browser does not support the audio element.
+                      </audio>
                     ) : viewMode === 'grid' ? (
                       <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{creation.content}</p>
+                    ) : creation.type === 'music' ? (
+                      <audio controls className="w-full mb-4" src={creation.content}>
+                        Your browser does not support the audio element.
+                      </audio>
                     ) : (
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{creation.prompt}</p>
                     )}
@@ -368,7 +384,15 @@ const Library = () => {
                 <AlertDialogDescription>
                   <div className="mt-4 space-y-4">
                     <div><strong>Prompt:</strong><p className="mt-1 text-foreground/80">{selectedCreation.prompt}</p></div>
-                    {selectedCreation.type === 'image' ? <img src={selectedCreation.content} className="w-full rounded-lg" /> : <p className="text-foreground/80 whitespace-pre-wrap">{selectedCreation.content}</p>}
+                    {selectedCreation.type === 'image' ? (
+                      <img src={selectedCreation.content} className="w-full rounded-lg" />
+                    ) : selectedCreation.type === 'music' ? (
+                      <audio controls className="w-full" src={selectedCreation.content}>
+                        Your browser does not support the audio element.
+                      </audio>
+                    ) : (
+                      <p className="text-foreground/80 whitespace-pre-wrap">{selectedCreation.content}</p>
+                    )}
                   </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
