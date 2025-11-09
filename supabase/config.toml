@@ -9,6 +9,9 @@ verify_jwt = true
 [functions.generate-music]
 verify_jwt = true
 
+[functions.check-music-status]
+verify_jwt = true
+
 [functions.generate-video]
 verify_jwt = true
 

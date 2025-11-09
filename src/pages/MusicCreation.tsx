@@ -32,18 +32,62 @@ const MusicCreation = () => {
     }
 
     setIsGenerating(true);
+    setAudioUrl(null);
+    
     try {
+      // Step 1: Start music generation
       const { data, error } = await supabase.functions.invoke("generate-music", {
         body: { prompt: prompt.trim() },
       });
 
       if (error) throw error;
 
-      setAudioUrl(data.audioUrl);
+      const taskId = data.taskId;
+      console.log('Music generation started, task ID:', taskId);
+
       toast({
-        title: "Music generated!",
-        description: "Your music is ready to play",
+        title: "Generation started",
+        description: "This will take 60-120 seconds. Please wait...",
       });
+
+      // Step 2: Poll for completion
+      let attempts = 0;
+      const maxAttempts = 30; // 30 attempts × 5 seconds = 150 seconds max
+      
+      const pollStatus = async (): Promise<void> => {
+        if (attempts >= maxAttempts) {
+          throw new Error('Music generation timed out. Please try again.');
+        }
+
+        attempts++;
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+
+        const { data: statusData, error: statusError } = await supabase.functions.invoke(
+          "check-music-status",
+          { body: { taskId } }
+        );
+
+        if (statusError) throw statusError;
+
+        if (statusData.status === 'complete') {
+          setAudioUrl(statusData.audioUrl);
+          if (statusData.title && !title) {
+            setTitle(statusData.title);
+          }
+          toast({
+            title: "Music generated!",
+            description: "Your music is ready to play",
+          });
+        } else if (statusData.status === 'processing') {
+          console.log(`Still processing... (attempt ${attempts}/${maxAttempts})`);
+          await pollStatus(); // Continue polling
+        } else {
+          throw new Error('Unknown status: ' + statusData.status);
+        }
+      };
+
+      await pollStatus();
+
     } catch (error: any) {
       console.error("Error generating music:", error);
       

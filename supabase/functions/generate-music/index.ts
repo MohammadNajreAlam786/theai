@@ -58,59 +58,14 @@ serve(async (req) => {
     const taskId = createData.data.taskId;
     console.log('Music generation started with task ID:', taskId);
 
-    // Step 2: Poll for completion
-    let audioUrl: string | null = null;
-    let attempts = 0;
-    const maxAttempts = 40; // 200 seconds max (first track ready in 30-40s)
-
-    while (!audioUrl && attempts < maxAttempts) {
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // Check every 5 seconds
-
-      const statusResponse = await fetch(`https://api.sunoapi.org/api/v1/query?taskId=${taskId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${SUNO_API_KEY}`,
-        },
-      });
-
-      if (!statusResponse.ok) {
-        console.error('Suno API status check error:', statusResponse.status);
-        attempts++;
-        continue;
-      }
-
-      const statusData = await statusResponse.json();
-      
-      if (statusData.code === 200 && statusData.data) {
-        const songs = Array.isArray(statusData.data) ? statusData.data : [statusData.data];
-        const completeSong = songs.find((song: any) => song.status === 'complete' && song.audio_url);
-        
-        if (completeSong) {
-          // Download the audio file
-          const audioResponse = await fetch(completeSong.audio_url);
-          const audioBlob = await audioResponse.arrayBuffer();
-          const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBlob)));
-          audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
-          console.log('Music generated successfully');
-          break;
-        }
-        
-        const failedSong = songs.find((song: any) => song.status === 'error' || song.status === 'failed');
-        if (failedSong) {
-          throw new Error(`Music generation failed: ${failedSong.error_message || 'Unknown error'}`);
-        }
-      }
-
-      console.log(`Music still generating... (attempt ${attempts + 1}/${maxAttempts})`);
-      attempts++;
-    }
-
-    if (!audioUrl) {
-      throw new Error('Music generation timed out after 200 seconds');
-    }
+    // Return task ID immediately - Suno will callback when ready
+    // The callback-based approach is more reliable than polling
 
     return new Response(
-      JSON.stringify({ audioUrl }),
+      JSON.stringify({ 
+        taskId,
+        message: 'Music generation started. This will take 60-120 seconds. Please check back shortly.'
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
