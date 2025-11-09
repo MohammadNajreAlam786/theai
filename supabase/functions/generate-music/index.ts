@@ -31,7 +31,8 @@ serve(async (req) => {
         prompt: prompt,
         customMode: false,
         instrumental: false,
-        model: 'V3_5'
+        model: 'V3_5',
+        callBackUrl: ''
       }),
     });
 
