@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +14,23 @@ serve(async (req) => {
   try {
     const { prompt } = await req.json();
     const SUNO_API_KEY = Deno.env.get('SUNO_API_KEY');
+    
+    // Get user from JWT
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Authorization header required');
+    }
+    
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new Error('User authentication failed');
+    }
 
     if (!SUNO_API_KEY) {
       throw new Error('SUNO_API_KEY is not configured');
@@ -57,6 +75,21 @@ serve(async (req) => {
 
     const taskId = createData.data.taskId;
     console.log('Music generation started with task ID:', taskId);
+
+    // Store task in database
+    const { error: dbError } = await supabase
+      .from('music_tasks')
+      .insert({
+        task_id: taskId,
+        user_id: user.id,
+        prompt: prompt,
+        status: 'pending'
+      });
+    
+    if (dbError) {
+      console.error('Error storing task:', dbError);
+      throw new Error('Failed to store music generation task');
+    }
 
     // Return task ID immediately - Suno will callback when ready
     // The callback-based approach is more reliable than polling

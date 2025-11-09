@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,58 +13,52 @@ serve(async (req) => {
 
   try {
     const { taskId } = await req.json();
-    const SUNO_API_KEY = Deno.env.get('SUNO_API_KEY');
-
-    if (!SUNO_API_KEY) {
-      throw new Error('SUNO_API_KEY is not configured');
+    
+    // Get user from JWT
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Authorization header required');
     }
+    
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
 
     console.log('Checking music status for task:', taskId);
 
-    const statusResponse = await fetch(`https://api.sunoapi.org/api/v1/query?taskIds=${taskId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${SUNO_API_KEY}`,
-      },
-    });
+    // Query our database for the task
+    const { data: task, error } = await supabase
+      .from('music_tasks')
+      .select('*')
+      .eq('task_id', taskId)
+      .single();
 
-    if (!statusResponse.ok) {
-      const errorText = await statusResponse.text();
-      console.error('Suno API status check error:', statusResponse.status, errorText);
-      throw new Error(`Failed to check status: ${statusResponse.status}`);
+    if (error) {
+      console.error('Error fetching task:', error);
+      throw new Error(`Failed to fetch task: ${error.message}`);
     }
 
-    const statusData = await statusResponse.json();
-    console.log('Status response:', JSON.stringify(statusData));
-
-    if (statusData.code !== 200) {
-      throw new Error(`Suno API error: ${statusData.msg || 'Unknown error'}`);
+    if (!task) {
+      throw new Error('Task not found');
     }
 
-    // Extract first complete song
-    const songs = Array.isArray(statusData.data) ? statusData.data : [statusData.data];
-    const completeSong = songs.find((song: any) => song.audio_url && song.audio_url.length > 0);
+    console.log('Task status:', task.status);
 
-    if (completeSong) {
-      // Download and convert to base64
-      const audioResponse = await fetch(completeSong.audio_url);
-      const audioBlob = await audioResponse.arrayBuffer();
-      const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBlob)));
-      
+    if (task.status === 'complete' && task.audio_url) {
       return new Response(
         JSON.stringify({ 
           status: 'complete',
-          audioUrl: `data:audio/mpeg;base64,${base64Audio}`,
-          title: completeSong.title || 'Untitled'
+          audioUrl: task.audio_url,
+          title: task.title || 'Untitled'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Check if any failed
-    const failedSong = songs.find((song: any) => song.status === 'error' || song.status === 'failed');
-    if (failedSong) {
-      throw new Error(`Music generation failed: ${failedSong.error_message || 'Unknown error'}`);
+    if (task.status === 'error') {
+      throw new Error(task.error_message || 'Music generation failed');
     }
 
     // Still processing
