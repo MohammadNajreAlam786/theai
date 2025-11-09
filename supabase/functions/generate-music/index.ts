@@ -32,7 +32,7 @@ serve(async (req) => {
         customMode: false,
         instrumental: false,
         model: 'V3_5',
-        callBackUrl: ''
+        callBackUrl: 'https://evjdmanjcqwvuymrnded.functions.supabase.co/suno-callback'
       }),
     });
 
