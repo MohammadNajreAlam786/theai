@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Sparkles, Trash2, Eye, Share2, Globe, Search, Grid3x3, List, Filter } from "lucide-react";
+import { ArrowLeft, Sparkles, Trash2, Eye, Share2, Globe, Search, Grid3x3, List, Filter, X, Play, Music as MusicIcon, Image as ImageIcon, FileText, Video } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -280,55 +280,112 @@ const Library = () => {
                 {creations.length === 0 && <Button variant="hero" onClick={() => navigate('/dashboard')}>Start Creating</Button>}
               </Card>
             ) : (
-              <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+              <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-8" : "space-y-6"}>
                 {filteredCreations.map((creation, i) => (
-                  <Card key={creation.id} className={`p-6 bg-card/50 backdrop-blur-xl animate-fade-in ${viewMode === 'list' ? 'flex gap-6 items-start' : ''}`} style={{animationDelay: `${i*0.05}s`}}>
-                    {viewMode === 'list' && creation.type === 'image' && (
-                      <img src={creation.content} className="w-32 h-32 object-cover rounded flex-shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between mb-4">
-                        <div className="flex gap-2 items-center">
-                          <span className={`px-3 py-1 rounded-full text-xs ${getTypeColor(creation.type)} bg-clip-text text-transparent`}>{creation.type}</span>
-                          {creation.is_public && <Globe className="w-4 h-4 text-primary" />}
+                  <Card key={creation.id} className={`group overflow-hidden bg-card/50 backdrop-blur-xl border-border hover:border-primary/50 transition-all duration-300 animate-fade-in ${viewMode === 'list' ? 'flex gap-6' : ''}`} style={{animationDelay: `${i*0.05}s`}}>
+                    {/* Content Preview Section */}
+                    <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'w-full'}`}>
+                      {creation.type === 'image' ? (
+                        <div className="relative h-56 bg-muted/30 overflow-hidden">
+                          <img src={creation.content} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={creation.title} />
+                          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+                          <ImageIcon className="absolute top-3 left-3 w-5 h-5 text-primary" />
+                        </div>
+                      ) : creation.type === 'music' ? (
+                        <div className="relative h-56 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-primary/10 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-gradient-mesh opacity-20" />
+                          <MusicIcon className="w-16 h-16 text-primary/40" />
+                          <MusicIcon className="absolute top-3 left-3 w-5 h-5 text-primary" />
+                        </div>
+                      ) : creation.type === 'video' ? (
+                        <div className="relative h-56 bg-gradient-to-br from-orange-500/10 via-red-500/10 to-primary/10 flex items-center justify-center">
+                          <Video className="w-16 h-16 text-primary/40" />
+                          <Video className="absolute top-3 left-3 w-5 h-5 text-primary" />
+                        </div>
+                      ) : (
+                        <div className="relative h-56 bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-primary/10 flex items-center justify-center p-6">
+                          <FileText className="w-16 h-16 text-primary/40 absolute" />
+                          <p className="relative z-10 text-sm text-foreground/60 line-clamp-6 text-center">{creation.content}</p>
+                          <FileText className="absolute top-3 left-3 w-5 h-5 text-primary" />
+                        </div>
+                      )}
+                      {creation.is_public && (
+                        <div className="absolute top-3 right-3 bg-primary/90 backdrop-blur-sm rounded-full p-1.5">
+                          <Globe className="w-4 h-4 text-primary-foreground" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info Section */}
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-lg mb-1 line-clamp-2 group-hover:text-primary transition-colors">{creation.title}</h3>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTypeColor(creation.type)} bg-clip-text text-transparent`}>
+                              {creation.type.toUpperCase()}
+                            </span>
+                            <span>•</span>
+                            <span>{new Date(creation.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Prompt Preview */}
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
+                        <span className="font-medium">Prompt:</span> {creation.prompt}
+                      </p>
+
+                      {/* Audio Player for Music */}
+                      {creation.type === 'music' && (
+                        <div className="mb-4">
+                          <audio controls className="w-full h-10" src={creation.content}>
+                            Your browser does not support the audio element.
+                          </audio>
+                        </div>
+                      )}
+
+                      {/* Actions and Social */}
+                      <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                        <div className="flex gap-3">
+                          <LikeButton creationId={creation.id} />
+                          <CommentsSection creationId={creation.id} />
                         </div>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedCreation(creation)}><Eye className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedCreation(creation)} title="View details">
+                            <Eye className="w-4 h-4" />
+                          </Button>
                           <AddToCollectionDialog creationId={creation.id} />
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleTogglePublic(creation.id, creation.is_public)}><Share2 className="w-4 h-4" /></Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8" 
+                            onClick={() => handleTogglePublic(creation.id, creation.is_public)}
+                            title={creation.is_public ? "Make private" : "Make public"}
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </Button>
                           <AlertDialog>
-                            <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="w-4 h-4" /></Button></AlertDialogTrigger>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" title="Delete">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
                             <AlertDialogContent>
-                              <AlertDialogHeader><AlertDialogTitle>Delete?</AlertDialogTitle></AlertDialogHeader>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Creation?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete "{creation.title}".
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(creation.id)}>Delete</AlertDialogAction>
+                                <AlertDialogAction onClick={() => handleDelete(creation.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  Delete
+                                </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                        </div>
-                      </div>
-                      <h3 className="font-bold mb-2">{creation.title}</h3>
-                      {viewMode === 'grid' && creation.type === 'image' ? (
-                        <img src={creation.content} className="w-full h-48 object-cover rounded mb-4" />
-                      ) : viewMode === 'grid' && creation.type === 'music' ? (
-                        <audio controls className="w-full mb-4" src={creation.content}>
-                          Your browser does not support the audio element.
-                        </audio>
-                      ) : viewMode === 'grid' ? (
-                        <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{creation.content}</p>
-                      ) : creation.type === 'music' ? (
-                        <audio controls className="w-full mb-4" src={creation.content}>
-                          Your browser does not support the audio element.
-                        </audio>
-                      ) : (
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{creation.prompt}</p>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-muted-foreground">{new Date(creation.created_at).toLocaleDateString()}</div>
-                        <div className="flex gap-2">
-                          <LikeButton creationId={creation.id} />
-                          <CommentsSection creationId={creation.id} />
                         </div>
                       </div>
                     </div>
@@ -339,31 +396,71 @@ const Library = () => {
           </TabsContent>
 
           <TabsContent value="discover">
-            <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+            <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-8" : "space-y-6"}>
               {filteredCreations.map((creation, i) => (
-                <Card key={creation.id} className={`p-6 bg-card/50 backdrop-blur-xl animate-fade-in cursor-pointer ${viewMode === 'list' ? 'flex gap-6 items-start' : ''}`} style={{animationDelay: `${i*0.05}s`}} onClick={() => setSelectedCreation(creation)}>
-                  {viewMode === 'list' && creation.type === 'image' && (
-                    <img src={creation.content} className="w-32 h-32 object-cover rounded flex-shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <span className={`px-3 py-1 rounded-full text-xs ${getTypeColor(creation.type)} bg-clip-text text-transparent mb-4 inline-block`}>{creation.type}</span>
-                    <h3 className="font-bold mb-2">{creation.title}</h3>
-                    {viewMode === 'grid' && creation.type === 'image' ? (
-                      <img src={creation.content} className="w-full h-48 object-cover rounded mb-4" />
-                    ) : viewMode === 'grid' && creation.type === 'music' ? (
-                      <audio controls className="w-full mb-4" src={creation.content}>
-                        Your browser does not support the audio element.
-                      </audio>
-                    ) : viewMode === 'grid' ? (
-                      <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{creation.content}</p>
+                <Card 
+                  key={creation.id} 
+                  className="group overflow-hidden bg-card/50 backdrop-blur-xl border-border hover:border-primary/50 transition-all duration-300 animate-fade-in cursor-pointer" 
+                  style={{animationDelay: `${i*0.05}s`}} 
+                  onClick={() => setSelectedCreation(creation)}
+                >
+                  {/* Content Preview Section */}
+                  <div className="relative w-full">
+                    {creation.type === 'image' ? (
+                      <div className="relative h-56 bg-muted/30 overflow-hidden">
+                        <img src={creation.content} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={creation.title} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+                        <ImageIcon className="absolute top-3 left-3 w-5 h-5 text-primary" />
+                      </div>
                     ) : creation.type === 'music' ? (
-                      <audio controls className="w-full mb-4" src={creation.content}>
-                        Your browser does not support the audio element.
-                      </audio>
+                      <div className="relative h-56 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-primary/10 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-gradient-mesh opacity-20" />
+                        <MusicIcon className="w-16 h-16 text-primary/40" />
+                        <MusicIcon className="absolute top-3 left-3 w-5 h-5 text-primary" />
+                      </div>
+                    ) : creation.type === 'video' ? (
+                      <div className="relative h-56 bg-gradient-to-br from-orange-500/10 via-red-500/10 to-primary/10 flex items-center justify-center">
+                        <Video className="w-16 h-16 text-primary/40" />
+                        <Video className="absolute top-3 left-3 w-5 h-5 text-primary" />
+                      </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{creation.prompt}</p>
+                      <div className="relative h-56 bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-primary/10 flex items-center justify-center p-6">
+                        <FileText className="w-16 h-16 text-primary/40 absolute" />
+                        <p className="relative z-10 text-sm text-foreground/60 line-clamp-6 text-center">{creation.content}</p>
+                        <FileText className="absolute top-3 left-3 w-5 h-5 text-primary" />
+                      </div>
                     )}
-                    <div className="flex gap-2 mt-4">
+                    {creation.is_public && (
+                      <div className="absolute top-3 right-3 bg-primary/90 backdrop-blur-sm rounded-full p-1.5">
+                        <Globe className="w-4 h-4 text-primary-foreground" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info Section */}
+                  <div className="p-6">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-lg mb-1 line-clamp-2 group-hover:text-primary transition-colors">{creation.title}</h3>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTypeColor(creation.type)} bg-clip-text text-transparent`}>
+                          {creation.type.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                      <span className="font-medium">Prompt:</span> {creation.prompt}
+                    </p>
+
+                    {creation.type === 'music' && (
+                      <div className="mb-4" onClick={(e) => e.stopPropagation()}>
+                        <audio controls className="w-full h-10" src={creation.content}>
+                          Your browser does not support the audio element.
+                        </audio>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                       <LikeButton creationId={creation.id} />
                       <CommentsSection creationId={creation.id} />
                     </div>
@@ -378,25 +475,77 @@ const Library = () => {
 
         {selectedCreation && (
           <AlertDialog open={!!selectedCreation} onOpenChange={() => setSelectedCreation(null)}>
-            <AlertDialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-              <AlertDialogHeader>
-                <AlertDialogTitle>{selectedCreation.title}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  <div className="mt-4 space-y-4">
-                    <div><strong>Prompt:</strong><p className="mt-1 text-foreground/80">{selectedCreation.prompt}</p></div>
+            <AlertDialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+              {/* Header with Close Button */}
+              <div className="flex items-start justify-between pb-4 border-b border-border">
+                <div className="flex-1 pr-8">
+                  <AlertDialogTitle className="text-2xl font-bold mb-2">{selectedCreation.title}</AlertDialogTitle>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeColor(selectedCreation.type)} bg-clip-text text-transparent`}>
+                      {selectedCreation.type.toUpperCase()}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(selectedCreation.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
+                  onClick={() => setSelectedCreation(null)}
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              {/* Scrollable Content */}
+              <AlertDialogDescription className="flex-1 overflow-y-auto py-6 space-y-6">
+                {/* Prompt Section */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-foreground flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    Prompt
+                  </h4>
+                  <p className="text-foreground/80 bg-muted/50 rounded-lg p-4 border border-border/50">
+                    {selectedCreation.prompt}
+                  </p>
+                </div>
+
+                {/* Content Section */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-foreground">Generated Content</h4>
+                  <div className="rounded-lg overflow-hidden border border-border/50">
                     {selectedCreation.type === 'image' ? (
-                      <img src={selectedCreation.content} className="w-full rounded-lg" />
+                      <img src={selectedCreation.content} className="w-full" alt={selectedCreation.title} />
                     ) : selectedCreation.type === 'music' ? (
-                      <audio controls className="w-full" src={selectedCreation.content}>
-                        Your browser does not support the audio element.
-                      </audio>
+                      <div className="bg-muted/50 p-6 flex items-center justify-center">
+                        <audio controls className="w-full max-w-xl" src={selectedCreation.content}>
+                          Your browser does not support the audio element.
+                        </audio>
+                      </div>
+                    ) : selectedCreation.type === 'video' ? (
+                      <div className="bg-muted/50 p-6 flex items-center justify-center min-h-[200px]">
+                        <Video className="w-16 h-16 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground ml-4">Video preview coming soon</p>
+                      </div>
                     ) : (
-                      <p className="text-foreground/80 whitespace-pre-wrap">{selectedCreation.content}</p>
+                      <div className="bg-muted/50 p-6">
+                        <p className="text-foreground/80 whitespace-pre-wrap">{selectedCreation.content}</p>
+                      </div>
                     )}
                   </div>
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter><AlertDialogCancel>Close</AlertDialogCancel></AlertDialogFooter>
+                </div>
+              </AlertDialogDescription>
+
+              {/* Footer Actions */}
+              <div className="flex items-center justify-between pt-4 border-t border-border">
+                <div className="flex gap-3">
+                  <LikeButton creationId={selectedCreation.id} />
+                  <CommentsSection creationId={selectedCreation.id} />
+                </div>
+                <AlertDialogCancel className="m-0">Close</AlertDialogCancel>
+              </div>
             </AlertDialogContent>
           </AlertDialog>
         )}
