@@ -34,11 +34,19 @@ serve(async (req) => {
         const completeSong = songs.find((song: any) => song.audio_url);
         
         if (completeSong) {
-          // Download and convert to base64
+          // Download and convert to base64 in chunks to avoid stack overflow
           const audioResponse = await fetch(completeSong.audio_url);
           const audioBlob = await audioResponse.arrayBuffer();
-          const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBlob)));
-          const dataUrl = `data:audio/mpeg;base64,${base64Audio}`;
+          const uint8Array = new Uint8Array(audioBlob);
+          
+          // Convert to base64 in chunks to avoid stack overflow
+          let base64Audio = '';
+          const chunkSize = 8192;
+          for (let i = 0; i < uint8Array.length; i += chunkSize) {
+            const chunk = uint8Array.slice(i, i + chunkSize);
+            base64Audio += String.fromCharCode.apply(null, Array.from(chunk));
+          }
+          const dataUrl = `data:audio/mpeg;base64,${btoa(base64Audio)}`;
 
           // Update task in database
           const { error: updateError } = await supabase
