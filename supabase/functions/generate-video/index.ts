@@ -27,6 +27,7 @@ serve(async (req) => {
       headers: {
         'Authorization': `Bearer ${RUNWAY_API_KEY}`,
         'Content-Type': 'application/json',
+        'X-Runway-Version': '2024-11-06',
       },
       body: JSON.stringify({
         prompt: prompt,
@@ -60,6 +61,7 @@ serve(async (req) => {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${RUNWAY_API_KEY}`,
+            'X-Runway-Version': '2024-11-06',
           },
         }
       );
