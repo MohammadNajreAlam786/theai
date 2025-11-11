@@ -80,6 +80,12 @@ serve(async (req) => {
     if (!createResponse.ok) {
       const errorText = await createResponse.text();
       console.error('Runway API create error:', createResponse.status, errorText);
+      
+      // Check for credit-related errors
+      if (errorText.includes('not have enough credits')) {
+        throw new Error('Insufficient Runway credits. Please add credits to your Runway account at https://dev.runwayml.com/');
+      }
+      
       throw new Error(`Failed to create video generation: ${errorText}`);
     }
 
