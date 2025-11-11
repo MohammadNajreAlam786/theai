@@ -73,7 +73,7 @@ serve(async (req) => {
         promptImage: imageUrl,
         model: 'gen3a_turbo',
         duration: 5,
-        ratio: '16:9'
+        ratio: '1280:768'
       }),
     });
 
