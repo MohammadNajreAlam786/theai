@@ -22,7 +22,7 @@ serve(async (req) => {
     console.log('Generating video with Runway API:', prompt);
 
     // Step 1: Create video generation task
-    const createResponse = await fetch('https://api.runwayml.com/v1/generations', {
+    const createResponse = await fetch('https://api.dev.runwayml.com/v1/generations', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RUNWAY_API_KEY}`,
@@ -55,7 +55,7 @@ serve(async (req) => {
       await new Promise((resolve) => setTimeout(resolve, 10000)); // Check every 10 seconds
 
       const statusResponse = await fetch(
-        `https://api.runwayml.com/v1/generations/${taskId}`,
+        `https://api.dev.runwayml.com/v1/generations/${taskId}`,
         {
           method: 'GET',
           headers: {
