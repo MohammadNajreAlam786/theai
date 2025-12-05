@@ -48,7 +48,7 @@ export const Hero = () => {
         </p>
         
         <p className="text-lg md:text-xl text-muted-foreground mb-16 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          Create stunning text, images, music, and video with the power of AI.
+          Create stunning text, images, and music with the power of AI.
           Your creative journey starts here.
         </p>
 
@@ -75,7 +75,7 @@ export const Hero = () => {
 
         {/* Feature Pills */}
         <div className="flex flex-wrap gap-4 justify-center mt-20 animate-fade-in" style={{ animationDelay: '0.5s' }}>
-          {['Text Generation', 'Image Creation', 'Music Composition', 'Video Production'].map((feature, index) => (
+          {['Text Generation', 'Image Creation', 'Music Composition'].map((feature, index) => (
             <div 
               key={feature}
               className="px-6 py-3 rounded-full bg-card/40 backdrop-blur-xl border border-border hover:border-primary/50 text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-glow-purple cursor-default animate-slide-in"

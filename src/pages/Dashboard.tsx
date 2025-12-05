@@ -8,7 +8,6 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import textIcon from "@/assets/text-icon.png";
 import imageIcon from "@/assets/image-icon.png";
 import musicIcon from "@/assets/music-icon.png";
-import videoIcon from "@/assets/video-icon.png";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -54,13 +53,6 @@ const Dashboard = () => {
       icon: musicIcon,
       gradient: "bg-gradient-accent",
       route: "/create/music"
-    },
-    {
-      title: "Video Production",
-      description: "Produce short clips, animations, and storyboards",
-      icon: videoIcon,
-      gradient: "bg-gradient-orange",
-      route: "/create/video"
     }
   ];
 
