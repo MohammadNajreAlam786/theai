@@ -75,7 +75,7 @@ export const Hero = () => {
 
         {/* Feature Pills */}
         <div className="flex flex-wrap gap-4 justify-center mt-20 animate-fade-in" style={{ animationDelay: '0.5s' }}>
-          {['Text Generation', 'Image Creation', 'Music Composition'].map((feature, index) => (
+          {['Text Generation', 'Image Creation'].map((feature, index) => (
             <div 
               key={feature}
               className="px-6 py-3 rounded-full bg-card/40 backdrop-blur-xl border border-border hover:border-primary/50 text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-glow-purple cursor-default animate-slide-in"
