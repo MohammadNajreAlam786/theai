@@ -5,12 +5,3 @@ verify_jwt = true
 
 [functions.generate-image]
 verify_jwt = true
-
-[functions.generate-music]
-verify_jwt = true
-
-[functions.check-music-status]
-verify_jwt = true
-
-[functions.suno-callback]
-verify_jwt = false
