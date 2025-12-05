@@ -39,7 +39,7 @@ export const Hero = () => {
         </div>
 
         <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-          <span className="text-gradient-primary animate-glow">Muse</span>
+          <span className="text-gradient-primary animate-glow">THE</span>
           <span className="text-gradient">AI</span>
         </h1>
         
