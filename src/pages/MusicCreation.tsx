@@ -91,9 +91,16 @@ const MusicCreation = () => {
     } catch (error: any) {
       console.error("Error generating music:", error);
       
+      // Check for insufficient credits error
+      const errorMessage = error.message || "";
+      const isCreditsError = errorMessage.toLowerCase().includes("credits") || 
+                            errorMessage.toLowerCase().includes("insufficient");
+      
       toast({
-        title: "Generation failed",
-        description: error.message || "Failed to generate music. Please try again.",
+        title: isCreditsError ? "API Credits Exhausted" : "Generation failed",
+        description: isCreditsError 
+          ? "Your Suno API credits have run out. Please top up at sunoapi.org to continue generating music."
+          : errorMessage || "Failed to generate music. Please try again.",
         variant: "destructive",
       });
     } finally {
