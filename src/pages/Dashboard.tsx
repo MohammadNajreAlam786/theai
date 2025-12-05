@@ -7,7 +7,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import textIcon from "@/assets/text-icon.png";
 import imageIcon from "@/assets/image-icon.png";
-import musicIcon from "@/assets/music-icon.png";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -46,13 +45,6 @@ const Dashboard = () => {
       icon: imageIcon,
       gradient: "bg-gradient-secondary",
       route: "/create/image"
-    },
-    {
-      title: "Music Composition",
-      description: "Compose melodies, generate lyrics, and create soundscapes",
-      icon: musicIcon,
-      gradient: "bg-gradient-accent",
-      route: "/create/music"
     }
   ];
 
