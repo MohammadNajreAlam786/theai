@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Sparkles, Copy, Download, Loader2, Save, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +22,7 @@ const TextCreation = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("story");
+  const [lyricsGenre, setLyricsGenre] = useState("pop");
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -52,7 +54,7 @@ const TextCreation = () => {
     
     try {
       const { data, error } = await supabase.functions.invoke('generate-text', {
-        body: { prompt, type: activeTab }
+        body: { prompt, type: activeTab, genre: activeTab === 'lyrics' ? lyricsGenre : undefined }
       });
 
       if (error) throw error;
@@ -197,6 +199,29 @@ const TextCreation = () => {
                 <TabsTrigger value="lyrics">Lyrics</TabsTrigger>
               </TabsList>
             </Tabs>
+
+            {activeTab === 'lyrics' && (
+              <div className="mb-6">
+                <label className="text-sm font-medium mb-2 block">Genre</label>
+                <Select value={lyricsGenre} onValueChange={setLyricsGenre}>
+                  <SelectTrigger className="bg-background/50">
+                    <SelectValue placeholder="Select genre" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pop">Pop</SelectItem>
+                    <SelectItem value="rock">Rock</SelectItem>
+                    <SelectItem value="hip-hop">Hip-Hop</SelectItem>
+                    <SelectItem value="country">Country</SelectItem>
+                    <SelectItem value="r&b">R&B</SelectItem>
+                    <SelectItem value="jazz">Jazz</SelectItem>
+                    <SelectItem value="electronic">Electronic</SelectItem>
+                    <SelectItem value="folk">Folk</SelectItem>
+                    <SelectItem value="metal">Metal</SelectItem>
+                    <SelectItem value="indie">Indie</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-4">
               <div>
