@@ -190,10 +190,11 @@ const TextCreation = () => {
             <h2 className="text-2xl font-bold mb-6">Create Your Content</h2>
             
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="story">Story</TabsTrigger>
                 <TabsTrigger value="poetry">Poetry</TabsTrigger>
                 <TabsTrigger value="script">Script</TabsTrigger>
+                <TabsTrigger value="lyrics">Lyrics</TabsTrigger>
               </TabsList>
             </Tabs>
 
