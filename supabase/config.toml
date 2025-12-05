@@ -12,8 +12,5 @@ verify_jwt = true
 [functions.check-music-status]
 verify_jwt = true
 
-[functions.generate-video]
-verify_jwt = true
-
 [functions.suno-callback]
 verify_jwt = false
