@@ -30,7 +30,8 @@ serve(async (req) => {
     const systemPrompts = {
       story: 'You are a creative storyteller. Write engaging, vivid short stories with compelling narratives, interesting characters, and satisfying conclusions.',
       poetry: 'You are a skilled poet. Create beautiful, evocative poetry with rich imagery, emotion, and meaningful metaphors.',
-      script: 'You are a professional screenwriter. Write compelling dialogue and scene descriptions for film or theater scripts with strong character voices and dramatic structure.'
+      script: 'You are a professional screenwriter. Write compelling dialogue and scene descriptions for film or theater scripts with strong character voices and dramatic structure.',
+      lyrics: 'You are a talented songwriter and lyricist. Write compelling song lyrics with memorable hooks, verses, choruses, and bridges. Include emotional depth, rhythm, and rhyme schemes that flow naturally when sung.'
     };
 
     const systemPrompt = systemPrompts[type as keyof typeof systemPrompts] || systemPrompts.story;
