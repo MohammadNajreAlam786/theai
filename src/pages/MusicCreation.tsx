@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Music, Save, Play, Pause } from "lucide-react";
+import { ArrowLeft, Music, Save, Play, Pause, AlertTriangle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const MusicCreation = () => {
   const navigate = useNavigate();
@@ -190,6 +191,23 @@ const MusicCreation = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Credits Notice */}
+        <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertTitle className="text-amber-500">API Credits Required</AlertTitle>
+          <AlertDescription className="text-muted-foreground">
+            Music generation requires Suno API credits. Please ensure you have sufficient credits before generating.
+            <a 
+              href="https://sunoapi.org" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 ml-1 text-primary hover:underline"
+            >
+              Top up credits <ExternalLink className="h-3 w-3" />
+            </a>
+          </AlertDescription>
+        </Alert>
+
         <Card className="p-6 space-y-6">
           {/* Prompt Input */}
           <div className="space-y-2">
