@@ -53,6 +53,9 @@ const Profile = () => {
     }
   };
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       if (!event.target.files || event.target.files.length === 0) {
@@ -60,7 +63,25 @@ const Profile = () => {
       }
 
       const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error("File size must be less than 5MB");
+        return;
+      }
+
+      // Validate MIME type
+      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        toast.error("Only PNG, JPG, WEBP, and GIF images are allowed");
+        return;
+      }
+
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      if (!fileExt || !['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(fileExt)) {
+        toast.error("Invalid file extension");
+        return;
+      }
+
       const filePath = `${user?.id}/avatar.${fileExt}`;
 
       setUploading(true);
