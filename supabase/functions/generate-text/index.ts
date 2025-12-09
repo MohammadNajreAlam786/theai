@@ -21,6 +21,32 @@ serve(async (req) => {
       );
     }
 
+    // Validate prompt length to prevent excessive API costs
+    if (typeof prompt !== 'string' || prompt.length > 5000) {
+      return new Response(
+        JSON.stringify({ error: 'Prompt must be a string with maximum 5000 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate type parameter
+    const validTypes = ['story', 'poetry', 'script', 'lyrics'];
+    if (type && !validTypes.includes(type)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid content type. Must be one of: story, poetry, script, lyrics' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate genre parameter when type is lyrics
+    const validGenres = ['pop', 'rock', 'hip-hop', 'country', 'rnb', 'jazz', 'electronic', 'folk', 'metal', 'indie'];
+    if (type === 'lyrics' && genre && !validGenres.includes(genre)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid genre. Must be one of: pop, rock, hip-hop, country, rnb, jazz, electronic, folk, metal, indie' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
