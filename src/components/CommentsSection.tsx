@@ -50,8 +50,9 @@ export const CommentsSection = ({ creationId }: CommentsSectionProps) => {
       // Fetch profiles separately
       if (data && data.length > 0) {
         const userIds = [...new Set(data.map(c => c.user_id))];
+        // Use public_profiles view to avoid exposing email addresses
         const { data: profilesData } = await supabase
-          .from('profiles')
+          .from('public_profiles')
           .select('id, full_name, avatar_url')
           .in('id', userIds);
 
