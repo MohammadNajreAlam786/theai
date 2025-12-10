@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Sparkles, Trash2, Eye, Share2, Globe, Search, Grid3x3, List, Filter, X, Play, Music as MusicIcon, Image as ImageIcon, FileText, Video } from "lucide-react";
+import { ArrowLeft, Sparkles, Trash2, Eye, Share2, Globe, Search, Grid3x3, List, Filter, X, Image as ImageIcon, FileText } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -161,9 +161,7 @@ const Library = () => {
   const getTypeColor = (type: string) => {
     const colors = {
       text: 'bg-gradient-primary',
-      image: 'bg-gradient-secondary',
-      music: 'bg-gradient-accent',
-      video: 'bg-gradient-orange'
+      image: 'bg-gradient-secondary'
     };
     return colors[type as keyof typeof colors] || 'bg-gradient-primary';
   };
@@ -246,8 +244,6 @@ const Library = () => {
                       <SelectItem value="all">All types</SelectItem>
                       <SelectItem value="text">Text</SelectItem>
                       <SelectItem value="image">Image</SelectItem>
-                      <SelectItem value="music">Music</SelectItem>
-                      <SelectItem value="video">Video</SelectItem>
                     </SelectContent>
                   </Select>
                   <div className="flex gap-1 border border-border rounded-md p-1">
@@ -291,17 +287,6 @@ const Library = () => {
                           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
                           <ImageIcon className="absolute top-3 left-3 w-5 h-5 text-primary" />
                         </div>
-                      ) : creation.type === 'music' ? (
-                        <div className="relative h-56 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-primary/10 flex items-center justify-center">
-                          <div className="absolute inset-0 bg-gradient-mesh opacity-20" />
-                          <MusicIcon className="w-16 h-16 text-primary/40" />
-                          <MusicIcon className="absolute top-3 left-3 w-5 h-5 text-primary" />
-                        </div>
-                      ) : creation.type === 'video' ? (
-                        <div className="relative h-56 bg-gradient-to-br from-orange-500/10 via-red-500/10 to-primary/10 flex items-center justify-center">
-                          <Video className="w-16 h-16 text-primary/40" />
-                          <Video className="absolute top-3 left-3 w-5 h-5 text-primary" />
-                        </div>
                       ) : (
                         <div className="relative h-56 bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-primary/10 flex items-center justify-center p-6">
                           <FileText className="w-16 h-16 text-primary/40 absolute" />
@@ -336,14 +321,6 @@ const Library = () => {
                         <span className="font-medium">Prompt:</span> {creation.prompt}
                       </p>
 
-                      {/* Audio Player for Music */}
-                      {creation.type === 'music' && (
-                        <div className="mb-4">
-                          <audio controls className="w-full h-10" src={creation.content}>
-                            Your browser does not support the audio element.
-                          </audio>
-                        </div>
-                      )}
 
                       {/* Actions and Social */}
                       <div className="flex items-center justify-between pt-4 border-t border-border/50">
@@ -412,17 +389,6 @@ const Library = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
                         <ImageIcon className="absolute top-3 left-3 w-5 h-5 text-primary" />
                       </div>
-                    ) : creation.type === 'music' ? (
-                      <div className="relative h-56 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-primary/10 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-gradient-mesh opacity-20" />
-                        <MusicIcon className="w-16 h-16 text-primary/40" />
-                        <MusicIcon className="absolute top-3 left-3 w-5 h-5 text-primary" />
-                      </div>
-                    ) : creation.type === 'video' ? (
-                      <div className="relative h-56 bg-gradient-to-br from-orange-500/10 via-red-500/10 to-primary/10 flex items-center justify-center">
-                        <Video className="w-16 h-16 text-primary/40" />
-                        <Video className="absolute top-3 left-3 w-5 h-5 text-primary" />
-                      </div>
                     ) : (
                       <div className="relative h-56 bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-primary/10 flex items-center justify-center p-6">
                         <FileText className="w-16 h-16 text-primary/40 absolute" />
@@ -452,13 +418,6 @@ const Library = () => {
                       <span className="font-medium">Prompt:</span> {creation.prompt}
                     </p>
 
-                    {creation.type === 'music' && (
-                      <div className="mb-4" onClick={(e) => e.stopPropagation()}>
-                        <audio controls className="w-full h-10" src={creation.content}>
-                          Your browser does not support the audio element.
-                        </audio>
-                      </div>
-                    )}
 
                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                       <LikeButton creationId={creation.id} />
@@ -518,17 +477,6 @@ const Library = () => {
                   <div className="rounded-lg overflow-hidden border border-border/50">
                     {selectedCreation.type === 'image' ? (
                       <img src={selectedCreation.content} className="w-full" alt={selectedCreation.title} />
-                    ) : selectedCreation.type === 'music' ? (
-                      <div className="bg-muted/50 p-6 flex items-center justify-center">
-                        <audio controls className="w-full max-w-xl" src={selectedCreation.content}>
-                          Your browser does not support the audio element.
-                        </audio>
-                      </div>
-                    ) : selectedCreation.type === 'video' ? (
-                      <div className="bg-muted/50 p-6 flex items-center justify-center min-h-[200px]">
-                        <Video className="w-16 h-16 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground ml-4">Video preview coming soon</p>
-                      </div>
                     ) : (
                       <div className="bg-muted/50 p-6">
                         <p className="text-foreground/80 whitespace-pre-wrap">{selectedCreation.content}</p>
