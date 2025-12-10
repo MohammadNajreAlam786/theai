@@ -48,7 +48,7 @@ export const Hero = () => {
         </p>
         
         <p className="text-lg md:text-xl text-muted-foreground mb-16 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          Create stunning text, images, and music with the power of AI.
+          Create stunning text and images with the power of AI.
           Your creative journey starts here.
         </p>
 
