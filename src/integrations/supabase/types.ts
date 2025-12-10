@@ -180,45 +180,6 @@ export type Database = {
           },
         ]
       }
-      music_tasks: {
-        Row: {
-          audio_url: string | null
-          created_at: string
-          error_message: string | null
-          id: string
-          prompt: string
-          status: string
-          task_id: string
-          title: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          audio_url?: string | null
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          prompt: string
-          status?: string
-          task_id: string
-          title?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          audio_url?: string | null
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          prompt?: string
-          status?: string
-          task_id?: string
-          title?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null
