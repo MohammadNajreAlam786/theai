@@ -1,18 +1,8 @@
-# Welcome to your Lovable project
+**THEAI**
 
-## Project info
+An Prompting website with the two creative medium like text generation and image creation.
 
-**URL**: https://lovable.dev/projects/24c2dd0c-4e7f-4458-87d5-2da5c1710094
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/24c2dd0c-4e7f-4458-87d5-2da5c1710094) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
+The text generation allows you to create stories, poetry, scripts, lyrics and the image creation allows you to generate stunning artwork, illustrations, and concept designs.
 
 **Use your preferred IDE**
 
