@@ -19,7 +19,27 @@ export const LikeButton = ({ creationId, className }: LikeButtonProps) => {
 
   useEffect(() => {
     loadLikes();
-    subscribeToLikes();
+
+    const channel = supabase
+      .channel(`likes-${creationId}-${Math.random().toString(36).slice(2)}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'likes',
+          filter: `creation_id=eq.${creationId}`,
+        },
+        () => {
+          loadLikes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [creationId, user]);
 
   const loadLikes = async () => {
@@ -48,27 +68,8 @@ export const LikeButton = ({ creationId, className }: LikeButtonProps) => {
     }
   };
 
-  const subscribeToLikes = () => {
-    const channel = supabase
-      .channel(`likes-${creationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'likes',
-          filter: `creation_id=eq.${creationId}`
-        },
-        () => {
-          loadLikes();
-        }
-      )
-      .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
+
 
   const toggleLike = async () => {
     if (!user) {
