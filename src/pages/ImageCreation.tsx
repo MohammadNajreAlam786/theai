@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Sparkles, Download, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Sparkles, Download, Loader2, Save, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,23 @@ const ImageCreation = () => {
   const [generatedImage, setGeneratedImage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [referenceImage, setReferenceImage] = useState<string>("");
+
+  const handleReferenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please upload an image.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Max 10MB.", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setReferenceImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -50,7 +67,7 @@ const ImageCreation = () => {
     
     try {
       const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt }
+        body: { prompt, referenceImage: referenceImage || undefined }
       });
 
       if (error) throw error;
@@ -184,6 +201,42 @@ const ImageCreation = () => {
                   onChange={(e) => setTitle(e.target.value)}
                   className="bg-background/50"
                 />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Reference Image (optional)</label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Upload an image to keep style/subject consistent across generations.
+                </p>
+                {referenceImage ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={referenceImage}
+                      alt="Reference"
+                      className="w-32 h-32 object-cover rounded-lg border border-border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 w-6 h-6"
+                      onClick={() => setReferenceImage("")}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
+                    <Upload className="w-6 h-6 mb-2 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Click to upload image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleReferenceUpload}
+                    />
+                  </label>
+                )}
               </div>
 
               <div>

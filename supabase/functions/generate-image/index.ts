@@ -12,8 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json();
-    
+    const { prompt, referenceImage } = await req.json();
+
     if (!prompt) {
       return new Response(
         JSON.stringify({ error: 'Prompt is required' }),
@@ -21,7 +21,6 @@ serve(async (req) => {
       );
     }
 
-    // Validate prompt length to prevent excessive API costs
     if (typeof prompt !== 'string' || prompt.length > 2000) {
       return new Response(
         JSON.stringify({ error: 'Prompt must be a string with maximum 2000 characters' }),
@@ -29,12 +28,35 @@ serve(async (req) => {
       );
     }
 
+    // Validate optional reference image (data URL or https URL)
+    if (referenceImage !== undefined) {
+      if (typeof referenceImage !== 'string' || referenceImage.length > 15_000_000) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid reference image' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (!referenceImage.startsWith('data:image/') && !referenceImage.startsWith('https://')) {
+        return new Response(
+          JSON.stringify({ error: 'Reference image must be a data URL or https URL' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    console.log('Generating image with prompt:', prompt);
+    console.log('Generating image', { hasReference: !!referenceImage });
+
+    const userContent = referenceImage
+      ? [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: referenceImage } },
+        ]
+      : prompt;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -45,7 +67,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash-image-preview',
         messages: [
-          { role: 'user', content: prompt }
+          { role: 'user', content: userContent }
         ],
         modalities: ['image', 'text']
       }),
@@ -75,8 +97,6 @@ serve(async (req) => {
     if (!imageUrl) {
       throw new Error('No image generated');
     }
-
-    console.log('Successfully generated image');
 
     return new Response(
       JSON.stringify({ imageUrl }),
