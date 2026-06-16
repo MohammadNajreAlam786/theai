@@ -68,27 +68,8 @@ export const LikeButton = ({ creationId, className }: LikeButtonProps) => {
     }
   };
 
-  const subscribeToLikes = () => {
-    const channel = supabase
-      .channel(`likes-${creationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'likes',
-          filter: `creation_id=eq.${creationId}`
-        },
-        () => {
-          loadLikes();
-        }
-      )
-      .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
+
 
   const toggleLike = async () => {
     if (!user) {
